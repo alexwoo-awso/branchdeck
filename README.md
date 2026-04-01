@@ -2,7 +2,7 @@
 
 Branchdeck is a small branch-preview control plane for Netlify-oriented projects.
 
-It is intentionally named without `netlify` in the product identity, but it does not hide the implementation: the app is built around the `netlify dev` CLI and is meant for projects developed for Netlify.
+The app is built around the `netlify dev` CLI and is meant for projects developed for Netlify.
 
 ## What it includes
 
