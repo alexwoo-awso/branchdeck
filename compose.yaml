@@ -1,0 +1,75 @@
+services:
+  branchdeck:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: branchdeck:0.1.0
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+      - "${APP_PORT:-8888}:${APP_PORT:-8888}"
+    environment:
+      PORT: ${PORT:-8080}
+      APP_PORT: ${APP_PORT:-8888}
+      REPO_DIR: /workspace/site
+      DATABASE_PATH: /workspace/data/app.db
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me-now}
+      PUBLIC_AUTH_MODE: ${PUBLIC_AUTH_MODE:-off}
+      PUBLIC_AUTH_USERNAME: ${PUBLIC_AUTH_USERNAME:-}
+      PUBLIC_AUTH_PASSWORD: ${PUBLIC_AUTH_PASSWORD:-}
+      GIT_REPO_URL: ${GIT_REPO_URL:-}
+      GIT_BRANCH: ${GIT_BRANCH:-develop}
+      GIT_CLONE_DEPTH: ${GIT_CLONE_DEPTH:-1}
+      GIT_AUTH_TOKEN: ${GIT_AUTH_TOKEN:-}
+      GIT_AUTH_USERNAME: ${GIT_AUTH_USERNAME:-x-access-token}
+      GIT_POLL_STRATEGY: ${GIT_POLL_STRATEGY:-hard-reset}
+      SYNC_INTERVAL_SECONDS: ${SYNC_INTERVAL_SECONDS:-15}
+      REPO_SUBDIR: ${REPO_SUBDIR:-}
+      INSTALL_CMD: ${INSTALL_CMD:-}
+      NETLIFY_PORT: ${NETLIFY_PORT:-8999}
+      NETLIFY_CONTEXT: ${NETLIFY_CONTEXT:-}
+      NETLIFY_SITE_ID: ${NETLIFY_SITE_ID:-}
+      NETLIFY_AUTH_TOKEN: ${NETLIFY_AUTH_TOKEN:-}
+      NETLIFY_FRAMEWORK: ${NETLIFY_FRAMEWORK:-}
+      NETLIFY_TARGET_PORT: ${NETLIFY_TARGET_PORT:-}
+      NETLIFY_FUNCTIONS: ${NETLIFY_FUNCTIONS:-}
+      NETLIFY_DIR: ${NETLIFY_DIR:-}
+      NETLIFY_COMMAND: ${NETLIFY_COMMAND:-}
+      NETLIFY_DEV_ARGS: ${NETLIFY_DEV_ARGS:-}
+      NETLIFY_OFFLINE: ${NETLIFY_OFFLINE:-false}
+      GITHUB_OAUTH_CLIENT_ID: ${GITHUB_OAUTH_CLIENT_ID:-}
+      GITHUB_OAUTH_CLIENT_SECRET: ${GITHUB_OAUTH_CLIENT_SECRET:-}
+      GITHUB_OAUTH_SCOPE: ${GITHUB_OAUTH_SCOPE:-repo,user}
+      TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - site-data:/workspace/site
+      - netlify-state:/workspace/netlify-state
+      - app-data:/workspace/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT || '8080') + '/login', { redirect: 'manual' }).then((r)=>process.exit(r.status < 500 ? 0 : 1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    networks:
+      - web
+    labels:
+      traefik.enable: ${TRAEFIK_ENABLE:-false}
+      traefik.http.routers.branchdeck.rule: Host(`${TRAEFIK_HOST:-branchdeck.localhost}`)
+      traefik.http.routers.branchdeck.entrypoints: ${TRAEFIK_ENTRYPOINTS:-websecure}
+      traefik.http.routers.branchdeck.tls: ${TRAEFIK_TLS:-true}
+      traefik.http.services.branchdeck.loadbalancer.server.port: ${PORT:-8080}
+
+volumes:
+  site-data:
+  netlify-state:
+  app-data:
+
+networks:
+  web:
+    external: ${TRAEFIK_EXTERNAL_NETWORK:-false}
+    name: ${TRAEFIK_NETWORK_NAME:-traefik}
